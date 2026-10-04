@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Apuração em Tempo Real - 2026</title>
+    <style>
+        :root {
+            --bg-color: #0d1117;
+            --card-bg: #161b22;
+            --text-main: #c9d1d9;
+            --text-muted: #8b949e;
+            --accent-blue: #2f81f7;
+            --accent-green: #238636;
+            --accent-red: #da3633;
+            --border-color: #30363d;
+            --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-family: var(--font-family);
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .dashboard {
+            max-width: 1000px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        header {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 15px;
+        }
+
+        .header-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header-title h1 {
+            font-size: 1.5rem;
+            color: #ffffff;
+        }
+
+        .header-title p {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            margin-top: 5px;
+        }
+
+        .update-controls {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .timer {
+            font-size: 0.9rem;
+            color: var(--accent-blue);
+            font-variant-numeric: tabular-nums;
+        }
+
+        button {
+            background-color: var(--card-bg);
+            color: var(--text-main);
+            border: 1px solid var(--border-color);
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: 0.2s;
+        }
+
+        button:hover {
+            background-color: var(--border-color);
+        }
+
+        select {
+            background-color: var(--card-bg);
+            color: var(--text-main);
+            border: 1px solid var(--border-color);
+            padding: 8px;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            outline: none;
+            cursor: pointer;
+            min-width: 200px;
+        }
+        
+        select:hover {
+            border-color: var(--accent-blue);
+        }
+
+        .grid-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .card-title {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .card-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #ffffff;
+        }
+
+        .progress-container {
+            width: 100%;
+            background-color: var(--bg-color);
+            border-radius: 10px;
+            overflow: hidden;
+            height: 12px;
+            margin-top: 5px;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background-color: var(--accent-green);
+            transition: width 1s ease-in-out;
+            width: 0%;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 5px;
+            margin-top: 10px;
+        }
+
+        .section-title {
+            font-size: 1.2rem;
+            color: #ffffff;
+        }
+
+        .candidates-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 20px;
+            min-height: 100px;
+        }
+
+        .candidate-row {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 10px 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .candidate-row:last-child {
+            border-bottom: none;
+        }
+
+        .photo-placeholder {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background-color: #30363d;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: var(--text-muted);
+        }
+
+        .candidate-info {
+            flex-grow: 1;
+        }
+
+        .candidate-name {
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: #ffffff;
+        }
+
+        .candidate-party {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+
+        .candidate-stats {
+            text-align: right;
+            min-width: 120px;
+        }
+
+        .candidate-pct {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: var(--accent-blue);
+        }
+
+        .candidate-votes {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        .mini-progress-container {
+            width: 100%;
+            background-color: var(--bg-color);
+            border-radius: 4px;
+            height: 6px;
+            margin-top: 8px;
+            overflow: hidden;
+        }
+
+        .mini-progress-bar {
+            height: 100%;
+            background-color: var(--accent-blue);
+            transition: width 1s ease-in-out;
+            width: 0%;
+        }
+
+        .secondary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 20px;
+            margin-top: 10px;
+        }
+        
+        .cargo-box {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .cargo-box-title {
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: #ffffff;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 10px;
+            margin-bottom: 10px;
+        }
+
+        .mini-candidate {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .mini-candidate:last-child {
+            border-bottom: none;
+        }
+
+        .mini-cand-info {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .mini-cand-name {
+            font-weight: bold;
+            font-size: 0.95rem;
+            color: #c9d1d9;
+        }
+
+        .mini-cand-party {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .mini-cand-stats {
+            text-align: right;
+        }
+
+        .mini-cand-pct {
+            font-weight: bold;
+            color: var(--accent-blue);
+            font-size: 1rem;
+        }
+
+        .mini-cand-votes {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .empty-state {
+            text-align: center;
+            color: var(--text-muted);
+            padding: 20px 0;
+            font-style: italic;
+        }
+        
+        .hint-state {
+            grid-column: 1 / -1;
+            text-align: center;
+            color: var(--text-muted);
+            padding: 40px;
+            background-color: var(--card-bg);
+            border: 1px dashed var(--border-color);
+            border-radius: 10px;
+            font-size: 1.1rem;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.6; }
+            100% { opacity: 1; }
+        }
+
+        .updating .card-value, .updating .candidate-pct, .updating .candidate-votes, .updating .mini-cand-pct {
+            animation: pulse 1s infinite;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="dashboard">
+        <header>
+            <div class="header-top">
+                <div class="header-title">
+                    <h1>Eleições 2026 - Apuração</h1>
+                    <p>Fonte: API Oficial TSE</p>
+                </div>
+                <div class="update-controls">
+                    <span class="timer" id="timerDisplay">Atualizando em 10s...</span>
+                    <button onclick="fetchData()">Atualizar Agora</button>
+                </div>
+            </div>
+        </header>
+
+        <div class="grid-cards" id="overviewCards">
+            <div class="card">
+                <div class="card-title">Urnas Apuradas (Visão Principal)</div>
+                <div class="card-value" id="urnasPct">0,00%</div>
+                <div class="progress-container">
+                    <div class="progress-bar" id="urnasBar"></div>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-title">Total de Votos Apurados</div>
+                <div class="card-value" id="totalVotos">0</div>
+            </div>
+        </div>
+
+        <div class="section-header">
+            <div class="section-title">Presidente da República</div>
+            <select id="ufPresSelect" onchange="triggerUpdate('pres')">
+                <option value="br">Brasil (Nacional)</option>
+                <option value="ac">Acre</option>
+                <option value="al">Alagoas</option>
+                <option value="ap">Amapá</option>
+                <option value="am">Amazonas</option>
+                <option value="ba">Bahia</option>
+                <option value="ce">Ceará</option>
+                <option value="df">Distrito Federal</option>
+                <option value="es">Espírito Santo</option>
+                <option value="go">Goiás</option>
+                <option value="ma">Maranhão</option>
+                <option value="mt">Mato Grosso</option>
+                <option value="ms">Mato Grosso do Sul</option>
+                <option value="mg">Minas Gerais</option>
+                <option value="pa">Pará</option>
+                <option value="pb">Paraíba</option>
+                <option value="pr">Paraná</option>
+                <option value="pe">Pernambuco</option>
+                <option value="pi">Piauí</option>
+                <option value="rj">Rio de Janeiro</option>
+                <option value="rn">Rio Grande do Norte</option>
+                <option value="rs">Rio Grande do Sul</option>
+                <option value="ro">Rondônia</option>
+                <option value="rr">Roraima</option>
+                <option value="sc">Santa Catarina</option>
+                <option value="sp">São Paulo</option>
+                <option value="se">Sergipe</option>
+                <option value="to">Tocantins</option>
+                <option value="zz">Exterior</option>
+            </select>
+        </div>
+        <div class="candidates-list" id="presidenteContainer">
+            <div class="empty-state">Aguardando dados...</div>
+        </div>
+
+        <div class="section-header">
+            <div class="section-title">Cargos Estaduais</div>
+            <select id="ufEstSelect" onchange="triggerUpdate('est')">
+                <option value="">-- Selecione um Estado para visualizar --</option>
+                <option value="ac">Acre</option>
+                <option value="al">Alagoas</option>
+                <option value="ap">Amapá</option>
+                <option value="am">Amazonas</option>
+                <option value="ba">Bahia</option>
+                <option value="ce">Ceará</option>
+                <option value="df">Distrito Federal</option>
+                <option value="es">Espírito Santo</option>
+                <option value="go">Goiás</option>
+                <option value="ma">Maranhão</option>
+                <option value="mt">Mato Grosso</option>
+                <option value="ms">Mato Grosso do Sul</option>
+                <option value="mg">Minas Gerais</option>
+                <option value="pa">Pará</option>
+                <option value="pb">Paraíba</option>
+                <option value="pr">Paraná</option>
+                <option value="pe">Pernambuco</option>
+                <option value="pi">Piauí</option>
+                <option value="rj">Rio de Janeiro</option>
+                <option value="rn">Rio Grande do Norte</option>
+                <option value="rs">Rio Grande do Sul</option>
+                <option value="ro">Rondônia</option>
+                <option value="rr">Roraima</option>
+                <option value="sc">Santa Catarina</option>
+                <option value="sp">São Paulo</option>
+                <option value="se">Sergipe</option>
+                <option value="to">Tocantins</option>
+            </select>
+        </div>
+        <div class="secondary-grid" id="outrosCargosGrid">
+            <div class="hint-state">👆 Selecione um estado acima para carregar a apuração dos cargos estaduais.</div>
+        </div>
+    </div>
+
+    <script>
+        const formatNumber = (num) => new Intl.NumberFormat('pt-BR').format(num);
+        const formatPct = (num) => {
+            const parsed = parseFloat(num.toString().replace(',', '.'));
+            return isNaN(parsed) ? '0,00%' : parsed.toFixed(2).replace('.', ',') + '%';
+        };
+
+        function triggerUpdate(context) {
+            if (context === 'pres') {
+                document.getElementById('presidenteContainer').innerHTML = '<div class="empty-state">Carregando...</div>';
+            } else if (context === 'est') {
+                const ufEst = document.getElementById('ufEstSelect').value;
+                if(ufEst) {
+                    document.getElementById('outrosCargosGrid').innerHTML = '<div class="hint-state" style="border:none;">Buscando dados estaduais...</div>';
+                }
+            }
+            fetchData();
+        }
+
+        async function fetchTSEData(uf, cargo, eleicao) {
+            const url = `https://resultados.tse.jus.br/oficial/ele2026/${eleicao}/dados/${uf}/${uf}-c${cargo}-e00${eleicao}-u.json`;
+            try {
+                const response = await fetch(`${url}?t=${new Date().getTime()}`, {
+                    method: 'GET',
+                    headers: { 'Accept': 'application/json' }
+                });
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                return await response.json();
+            } catch (error) {
+                return null;
+            }
+        }
+
+        function extractCandidates(data) {
+            if (!data || !data.carg || data.carg.length === 0) return [];
+            let candidatos = [];
+            data.carg.forEach(cargo => {
+                if (cargo.agr) {
+                    cargo.agr.forEach(agr => {
+                        if (agr.par) {
+                            agr.par.forEach(par => {
+                                if (par.cand) {
+                                    par.cand.forEach(c => {
+                                        candidatos.push({
+                                            nome: c.nmu || c.nm,
+                                            partido: par.sg || agr.nm,
+                                            vap: parseInt(c.vap) || 0,
+                                            pvap: c.pvap || "0,00"
+                                        });
+                                    });
+                                }
+                            });
+                        }
+                    });
+                }
+            });
+            candidatos.sort((a, b) => b.vap - a.vap);
+            return candidatos;
+        }
+
+        async function fetchData() {
+            const dashboard = document.querySelector('.dashboard');
+            dashboard.classList.add('updating');
+            
+            const ufPres = document.getElementById('ufPresSelect').value;
+            const ufEst = document.getElementById('ufEstSelect').value;
+
+            // Busca Presidente
+            const presData = await fetchTSEData(ufPres, '0001', '6257');
+            updateMainUI(presData);
+
+            // Busca os cargos estaduais
+            const grid = document.getElementById('outrosCargosGrid');
+            if (ufEst) {
+                const [gov, sen, dfed, dest] = await Promise.all([
+                    fetchTSEData(ufEst, '0003', '6259'),
+                    fetchTSEData(ufEst, '0005', '6259'),
+                    fetchTSEData(ufEst, '0006', '6259'),
+                    fetchTSEData(ufEst, ufEst === 'df' ? '0008' : '0007', '6259')
+                ]);
+                
+                grid.innerHTML = `
+                    <div class="cargo-box" id="boxGovernador"></div>
+                    <div class="cargo-box" id="boxSenador"></div>
+                    <div class="cargo-box" id="boxDepFed"></div>
+                    <div class="cargo-box" id="boxDepEst"></div>
+                `;
+
+                updateSecondaryUI('boxGovernador', 'Governador', gov);
+                updateSecondaryUI('boxSenador', 'Senador', sen);
+                updateSecondaryUI('boxDepFed', 'Deputado Federal', dfed);
+                updateSecondaryUI('boxDepEst', ufEst === 'df' ? 'Deputado Distrital' : 'Deputado Estadual', dest);
+
+            } else {
+                grid.innerHTML = '<div class="hint-state">👆 Selecione um estado acima para carregar a apuração dos cargos estaduais.</div>';
+            }
+            
+            dashboard.classList.remove('updating');
+            resetTimer();
+        }
+
+        function updateMainUI(data) {
+            const container = document.getElementById('presidenteContainer');
+            
+            if (!data) {
+                document.getElementById('urnasPct').innerText = '0,00%';
+                document.getElementById('urnasBar').style.width = '0%';
+                document.getElementById('totalVotos').innerText = '0';
+                container.innerHTML = '<div class="empty-state">Dados de Presidente não disponíveis.</div>';
+                return;
+            }
+
+            // A barra superior principal reflete os dados gerais (da seleção do Presidente)
+            const urnasAp = data.s && data.s.pst ? data.s.pst : "0,00";
+            const totalVotos = data.v && data.v.tv ? data.v.tv : "0";
+            
+            document.getElementById('urnasPct').innerText = formatPct(urnasAp);
+            document.getElementById('urnasBar').style.width = `${parseFloat(urnasAp.replace(',','.'))}%`;
+            document.getElementById('totalVotos').innerText = formatNumber(totalVotos);
+
+            const candidatos = extractCandidates(data);
+            const top5 = candidatos.slice(0, 5);
+
+            if (top5.length === 0) {
+                container.innerHTML = '<div class="empty-state">Sem candidatos registrados.</div>';
+                return;
+            }
+
+            container.innerHTML = ''; 
+            top5.forEach((cand, index) => {
+                const pctFloat = parseFloat(cand.pvap.replace(',', '.'));
+                let barColor = 'var(--text-muted)';
+                if(index === 0) barColor = 'var(--accent-green)';
+                if(index === 1) barColor = 'var(--accent-red)';
+
+                const row = document.createElement('div');
+                row.className = 'candidate-row';
+                row.innerHTML = `
+                    <div class="photo-placeholder">${index + 1}º</div>
+                    <div class="candidate-info">
+                        <div class="candidate-name">${cand.nome || 'Candidato'}</div>
+                        <div class="candidate-party">${cand.partido || ''}</div>
+                        <div class="mini-progress-container">
+                            <div class="mini-progress-bar" style="width: ${pctFloat}%; background-color: ${barColor}"></div>
+                        </div>
+                    </div>
+                    <div class="candidate-stats">
+                        <div class="candidate-pct" style="color: ${barColor}">${formatPct(cand.pvap)}</div>
+                        <div class="candidate-votes">${formatNumber(cand.vap)} votos</div>
+                    </div>
+                `;
+                container.appendChild(row);
+            });
+        }
+
+        function updateSecondaryUI(boxId, title, data) {
+            const box = document.getElementById(boxId);
+            if (!box) return;
+            
+            box.innerHTML = `<div class="cargo-box-title">${title}</div>`;
+
+            const candidatos = extractCandidates(data);
+            const top3 = candidatos.slice(0, 3);
+
+            if (top3.length === 0) {
+                box.innerHTML += '<div class="empty-state" style="padding: 10px 0; font-size: 0.9rem;">Sem dados.</div>';
+                return;
+            }
+
+            top3.forEach((cand, index) => {
+                const item = document.createElement('div');
+                item.className = 'mini-candidate';
+                item.innerHTML = `
+                    <div class="mini-cand-info">
+                        <div class="mini-cand-name">${index + 1}º ${cand.nome}</div>
+                        <div class="mini-cand-party">${cand.partido}</div>
+                    </div>
+                    <div class="mini-cand-stats">
+                        <div class="mini-cand-pct">${formatPct(cand.pvap)}</div>
+                        <div class="mini-cand-votes">${formatNumber(cand.vap)}</div>
+                    </div>
+                `;
+                box.appendChild(item);
+            });
+        }
+
+        let timeLeft = 10;
+        let timerInterval;
+        function resetTimer() {
+            clearInterval(timerInterval);
+            timeLeft = 10;
+            document.getElementById('timerDisplay').innerText = `Atualizando em ${timeLeft}s...`;
+            
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                if (timeLeft <= 0) {
+                    document.getElementById('timerDisplay').innerText = "Atualizando...";
+                    fetchData();
+                } else {
+                    document.getElementById('timerDisplay').innerText = `Atualizando em ${timeLeft}s...`;
+                }
+            }, 1000);
+        }
+
+        window.onload = () => {
+            fetchData();
+        };
+    </script>
+</body>
+</html>
